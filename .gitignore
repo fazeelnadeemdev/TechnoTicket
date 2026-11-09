@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+venv/
+.venv/
+env/
+
+# Production & Build Artifacts
+.next/
+out/
+dist/
+build/
+.vercel/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+techno_tickets.db
+
+# Uploads (preserve directory with .gitkeep)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Environment files
+.env
+.env*.local
+.env.local
+.env.production
+.env.development
+*.env
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# Raw Data Sheets (contains sensitive utility/portal passwords)
+*.xlsx
+*.xls
+*.csv
+
+# Operating System & IDEs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+

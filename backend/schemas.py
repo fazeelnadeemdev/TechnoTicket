@@ -18,11 +18,24 @@ class UserBase(BaseModel):
     email: str
     phone: Optional[str] = None
     role: str = "Admin"
+    panel_type: Optional[str] = "Processor"  # SuperAdmin, Manager, Processor, Placer
     department: str = "Admin"
+    departments: List[str] = Field(default_factory=list)  # e.g. ["Admin", "Maintenance"]
     team_type: str = "Internal"
 
 class UserCreate(UserBase):
     password: str
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    role: Optional[str] = None
+    panel_type: Optional[str] = None
+    department: Optional[str] = None
+    departments: Optional[List[str]] = None
+    team_type: Optional[str] = None
+    password: Optional[str] = None
 
 class UserResponse(UserBase):
     id: int
@@ -142,6 +155,23 @@ class MMDMResponse(MMDMBase):
     class Config:
         from_attributes = True
 
+# ----------------- Comment Schemas -----------------
+class TicketCommentCreate(BaseModel):
+    comment_text: str
+
+class TicketCommentResponse(BaseModel):
+    id: int
+    ticket_id: int
+    author_id: Optional[int] = None
+    author_name: str
+    author_role: Optional[str] = None
+    author_department: Optional[str] = None
+    comment_text: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
 # ----------------- Ticket Schemas -----------------
 class TicketCreate(BaseModel):
     market: str
@@ -165,6 +195,9 @@ class TicketUpdate(BaseModel):
     assigned_to_name: Optional[str] = None
     solved_by_team: Optional[str] = None
     solved_by_name: Optional[str] = None
+
+class TicketReopenRequest(BaseModel):
+    reason: str
 
 class TicketCloseRequest(BaseModel):
     payment_required: bool = False
@@ -192,6 +225,7 @@ class TicketResponse(BaseModel):
     priority: str
     status: str
     description: str
+    reopen_reason: Optional[str] = None
     assigned_to_id: Optional[int] = None
     assigned_to_name: Optional[str] = None
     solved_by_team: Optional[str] = None
@@ -213,6 +247,7 @@ class TicketResponse(BaseModel):
 
     open_duration_days: str
     closed_duration_days: str
+    comments: List[TicketCommentResponse] = Field(default_factory=list)
 
     class Config:
         from_attributes = True

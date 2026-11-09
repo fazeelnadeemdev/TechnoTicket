@@ -1,4 +1,5 @@
-export type UserRole = "Admin" | "MM" | "DM" | "Solver" | "Compliance";
+export type UserRole = "SuperAdmin" | "Manager" | "Processor" | "Placer" | "Admin" | "MM" | "DM" | "Solver" | "Compliance" | string;
+export type PanelType = "SuperAdmin" | "Manager" | "Processor" | "Placer" | string;
 export type Department = 
   | "Admin" 
   | "Maintenance" 
@@ -9,7 +10,9 @@ export type Department =
   | "RMA" 
   | "Escalation" 
   | "Management"
-  | "Compliance";
+  | "Compliance"
+  | "All"
+  | string;
 
 export type TicketPriority = "Low" | "Medium" | "High";
 export type TicketStatus = "Pending" | "Assigned" | "Open" | "Completed" | "Close" | "Hold" | "Re-Open";
@@ -21,8 +24,10 @@ export interface User {
   email: string;
   phone?: string;
   role: UserRole;
+  panel_type?: PanelType;
   department: Department;
-  team_type: "Internal" | "External";
+  departments?: string[];
+  team_type: "Internal" | "External" | string;
   created_at?: string;
 }
 
@@ -80,6 +85,17 @@ export interface TicketAttachment {
   size?: number;
 }
 
+export interface TicketComment {
+  id: number;
+  ticket_id: number;
+  author_id?: number | null;
+  author_name: string;
+  author_role?: string;
+  author_department?: string;
+  comment_text: string;
+  created_at: string;
+}
+
 export interface Ticket {
   id: number;
   ticket_code: string;
@@ -97,9 +113,10 @@ export interface Ticket {
   priority: TicketPriority;
   status: TicketStatus;
   description: string;
+  reopen_reason?: string;
   assigned_to_id?: number;
   assigned_to_name?: string;
-  solved_by_team?: "Internal" | "External";
+  solved_by_team?: "Internal" | "External" | string;
   solved_by_name?: string;
   images: string[];
   attachments: TicketAttachment[];
@@ -118,6 +135,7 @@ export interface Ticket {
 
   open_duration_days: string;
   closed_duration_days: string;
+  comments?: TicketComment[];
 }
 
 export interface KPICards {

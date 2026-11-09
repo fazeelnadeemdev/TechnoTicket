@@ -254,6 +254,85 @@ def update_ticket(
     return ticket
 
 
+@router.post("/{ticket_id}/reopen", response_model=schemas.TicketResponse)
+def reopen_ticket(
+    ticket_id: int,
+    reopen_data: schemas.TicketReopenRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    ticket = db.query(models.Ticket).filter(models.Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    if not reopen_data.reason or not reopen_data.reason.strip():
+        raise HTTPException(status_code=400, detail="Re-open reason is required.")
+
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+    ticket.status = "Re-Open"
+    ticket.reopen_reason = reopen_data.reason.strip()
+    ticket.updated_at = now_utc
+    ticket.closed_at = None
+
+    # Add audit comment
+    comment = models.TicketComment(
+        ticket_id=ticket.id,
+        author_id=current_user.id,
+        author_name=current_user.name,
+        author_role=current_user.role,
+        author_department=current_user.department,
+        comment_text=f"[Ticket Re-Opened]: {reopen_data.reason.strip()}",
+        created_at=now_utc,
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+
+@router.get("/{ticket_id}/comments", response_model=List[schemas.TicketCommentResponse])
+def get_ticket_comments(
+    ticket_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    ticket = db.query(models.Ticket).filter(models.Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return ticket.comments
+
+
+@router.post("/{ticket_id}/comments", response_model=schemas.TicketCommentResponse, status_code=status.HTTP_201_CREATED)
+def add_ticket_comment(
+    ticket_id: int,
+    payload: schemas.TicketCommentCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    ticket = db.query(models.Ticket).filter(models.Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    if not payload.comment_text or not payload.comment_text.strip():
+        raise HTTPException(status_code=400, detail="Comment text cannot be empty.")
+
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+    comment = models.TicketComment(
+        ticket_id=ticket.id,
+        author_id=current_user.id,
+        author_name=current_user.name,
+        author_role=current_user.role,
+        author_department=current_user.department,
+        comment_text=payload.comment_text.strip(),
+        created_at=now_utc,
+    )
+    db.add(comment)
+    ticket.updated_at = now_utc
+    db.commit()
+    db.refresh(comment)
+    return comment
+
+
 @router.post("/{ticket_id}/close", response_model=schemas.TicketResponse)
 def close_ticket(
     ticket_id: int,
@@ -298,6 +377,85 @@ def close_ticket(
     db.commit()
     db.refresh(ticket)
     return ticket
+
+
+@router.post("/{ticket_id}/reopen", response_model=schemas.TicketResponse)
+def reopen_ticket(
+    ticket_id: int,
+    reopen_data: schemas.TicketReopenRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    ticket = db.query(models.Ticket).filter(models.Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    if not reopen_data.reason or not reopen_data.reason.strip():
+        raise HTTPException(status_code=400, detail="Re-open reason is required.")
+
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+    ticket.status = "Re-Open"
+    ticket.reopen_reason = reopen_data.reason.strip()
+    ticket.updated_at = now_utc
+    ticket.closed_at = None
+
+    # Add audit comment
+    comment = models.TicketComment(
+        ticket_id=ticket.id,
+        author_id=current_user.id,
+        author_name=current_user.name,
+        author_role=current_user.role,
+        author_department=current_user.department,
+        comment_text=f"[Ticket Re-Opened]: {reopen_data.reason.strip()}",
+        created_at=now_utc,
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+
+@router.get("/{ticket_id}/comments", response_model=List[schemas.TicketCommentResponse])
+def get_ticket_comments(
+    ticket_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    ticket = db.query(models.Ticket).filter(models.Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return ticket.comments
+
+
+@router.post("/{ticket_id}/comments", response_model=schemas.TicketCommentResponse, status_code=status.HTTP_201_CREATED)
+def add_ticket_comment(
+    ticket_id: int,
+    payload: schemas.TicketCommentCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    ticket = db.query(models.Ticket).filter(models.Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    if not payload.comment_text or not payload.comment_text.strip():
+        raise HTTPException(status_code=400, detail="Comment text cannot be empty.")
+
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+    comment = models.TicketComment(
+        ticket_id=ticket.id,
+        author_id=current_user.id,
+        author_name=current_user.name,
+        author_role=current_user.role,
+        author_department=current_user.department,
+        comment_text=payload.comment_text.strip(),
+        created_at=now_utc,
+    )
+    db.add(comment)
+    ticket.updated_at = now_utc
+    db.commit()
+    db.refresh(comment)
+    return comment
 
 
 @router.get("/export/csv")

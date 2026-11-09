@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 def get_utc_now():
     return datetime.now(timezone.utc)
+
 from sqlalchemy import (
     Column, Integer, String, Text, Boolean, Float, DateTime, ForeignKey, JSON
 )
@@ -17,13 +18,16 @@ class User(Base):
     email = Column(String(150), unique=True, index=True, nullable=False)
     phone = Column(String(50), nullable=True)
     password_hash = Column(String(255), nullable=False)
-    role = Column(String(50), nullable=False, default="Admin")  # Admin, MM, DM, Solver, Compliance
+    role = Column(String(50), nullable=False, default="Admin")  # SuperAdmin, Manager, Processor, Placer, Admin, MM, DM, Solver, Compliance
+    panel_type = Column(String(50), nullable=True, default="Processor")  # SuperAdmin, Manager, Processor, Placer
     department = Column(String(50), nullable=False, default="Admin")  # Admin, Maintenance, Ordering, Accounting, IT, HR, RMA, Escalation, Management
+    departments = Column(JSON, default=list)  # e.g. ["Admin", "Maintenance"] or ["All", "Admin", ...]
     team_type = Column(String(50), nullable=False, default="Internal")  # Internal, External
     created_at = Column(DateTime, default=get_utc_now)
 
     created_tickets = relationship("Ticket", back_populates="creator", foreign_keys="Ticket.creator_id")
     assigned_tickets = relationship("Ticket", back_populates="assigned_to", foreign_keys="Ticket.assigned_to_id")
+    comments = relationship("TicketComment", back_populates="author")
 
 
 class Store(Base):
@@ -108,6 +112,7 @@ class Ticket(Base):
     priority = Column(String(20), nullable=False, default="Medium")  # Low, Medium, High
     status = Column(String(20), index=True, nullable=False, default="Pending")  # Pending, Assigned, Open, Completed, Close, Hold, Re-Open
     description = Column(Text, nullable=False)
+    reopen_reason = Column(Text, nullable=True)
 
     # Assignment & Resolution
     assigned_to_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -138,6 +143,7 @@ class Ticket(Base):
     assigned_to = relationship("User", back_populates="assigned_tickets", foreign_keys=[assigned_to_id])
     store = relationship("Store", back_populates="tickets")
     house = relationship("House", back_populates="tickets")
+    comments = relationship("TicketComment", back_populates="ticket", cascade="all, delete-orphan", order_by="TicketComment.created_at.asc()")
 
     @property
     def ticket_code(self) -> str:
@@ -159,3 +165,19 @@ class Ticket(Base):
             days = max(0, delta.days)
             return f"{days} days"
         return "Not closed"
+
+
+class TicketComment(Base):
+    __tablename__ = "ticket_comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticket_id = Column(Integer, ForeignKey("tickets.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    author_name = Column(String(120), nullable=False)
+    author_role = Column(String(50), nullable=True)
+    author_department = Column(String(50), nullable=True)
+    comment_text = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now, index=True)
+
+    ticket = relationship("Ticket", back_populates="comments")
+    author = relationship("User", back_populates="comments")

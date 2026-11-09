@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/context/AuthContext";
 import { Ticket } from "@/lib/types";
@@ -20,6 +21,7 @@ import { CreateTicketModal } from "@/components/modals/CreateTicketModal";
 const PRIORITIES = ["All Priorities", "Low", "Medium", "High"];
 
 export default function AssignedTicketsPage() {
+  const router = useRouter();
   const { user } = useAuth();
 
   // Toggle filter: 'Total' (all assigned tickets in system), 'Assigned To Me', 'Assigned By Me'
@@ -78,8 +80,7 @@ export default function AssignedTicketsPage() {
   };
 
   const handleTicketClick = (ticket: Ticket) => {
-    setSelectedTicket(ticket);
-    setDetailModalOpen(true);
+    router.push(`/tickets/${ticket.id}`);
   };
 
   const handleTicketUpdated = (updated: Ticket) => {

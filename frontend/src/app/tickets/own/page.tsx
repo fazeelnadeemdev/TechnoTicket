@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/context/AuthContext";
 import { Ticket } from "@/lib/types";
@@ -30,6 +31,7 @@ const STATUSES = [
 const PRIORITIES = ["All Priorities", "Low", "Medium", "High"];
 
 export default function OwnTicketsPage() {
+  const router = useRouter();
   const { user } = useAuth();
 
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
@@ -79,8 +81,7 @@ export default function OwnTicketsPage() {
   };
 
   const handleTicketClick = (ticket: Ticket) => {
-    setSelectedTicket(ticket);
-    setDetailModalOpen(true);
+    router.push(`/tickets/${ticket.id}`);
   };
 
   const handleTicketUpdated = (updated: Ticket) => {

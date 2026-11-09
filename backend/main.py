@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from config import settings
-from database import engine, Base
+from database import engine, Base, init_db
 from storage import ensure_upload_dir
 from seed import seed_database
 
@@ -15,7 +15,8 @@ from routers import auth, tickets, stores, houses, mm_dm, users, dashboard, uplo
 async def lifespan(app: FastAPI):
     # Startup: Ensure uploads directory exists and auto-seed database
     ensure_upload_dir()
-    Base.metadata.create_all(bind=engine)
+    init_db()
+
     try:
         seed_database()
     except Exception as e:

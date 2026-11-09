@@ -3,11 +3,13 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User } from "@/lib/types";
 import { apiFetch, setAuthToken, removeAuthToken, getAuthToken } from "@/lib/api";
+import { DepartmentSelectModal } from "@/components/modals/DepartmentSelectModal";
 
 interface AuthContextType {
   user: User | null;
   activeDepartment: string;
   setActiveDepartment: (dept: string) => void;
+  openDepartmentSelector: () => void;
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string, departmentContext?: string) => Promise<void>;
@@ -21,6 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [activeDepartment, setActiveDeptState] = useState<string>("Admin");
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showDeptModal, setShowDeptModal] = useState<boolean>(false);
 
   useEffect(() => {
     // Check saved token and user on client mount
@@ -50,6 +53,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem("techno_active_dept", dept);
   };
 
+  const openDepartmentSelector = () => {
+    setShowDeptModal(true);
+  };
+
   const login = async (email: string, password: string, departmentContext?: string) => {
     setIsLoading(true);
     try {
@@ -71,6 +78,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const chosenDept = departmentContext || loggedUser.department || "Admin";
       setActiveDeptState(chosenDept);
       localStorage.setItem("techno_active_dept", chosenDept);
+
+      // If user has multi-department access, trigger post-login department selection modal
+      if (loggedUser.departments && loggedUser.departments.length > 1) {
+        setShowDeptModal(true);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -89,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         activeDepartment,
         setActiveDepartment,
+        openDepartmentSelector,
         token,
         isLoading,
         login,
@@ -96,6 +109,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }}
     >
       {children}
+      {user && (
+        <DepartmentSelectModal
+          isOpen={showDeptModal}
+          onClose={() => setShowDeptModal(false)}
+          departments={user.departments || [user.department]}
+          activeDepartment={activeDepartment}
+          onSelectDepartment={setActiveDepartment}
+          userName={user.name}
+        />
+      )}
     </AuthContext.Provider>
   );
 };
@@ -107,4 +130,3 @@ export const useAuth = () => {
   }
   return context;
 };
-

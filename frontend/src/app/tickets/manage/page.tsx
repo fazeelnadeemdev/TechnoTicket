@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/context/AuthContext";
 import { Ticket, SolverUser } from "@/lib/types";
@@ -38,6 +39,7 @@ const DEPARTMENTS = [
 ];
 
 export default function ManageTicketsPage() {
+  const router = useRouter();
   const { user, activeDepartment } = useAuth();
 
   // Filters
@@ -133,8 +135,7 @@ export default function ManageTicketsPage() {
   };
 
   const handleTicketClick = (ticket: Ticket) => {
-    setSelectedTicket(ticket);
-    setDetailModalOpen(true);
+    router.push(`/tickets/${ticket.id}`);
   };
 
   const handleTicketUpdated = (updated: Ticket) => {

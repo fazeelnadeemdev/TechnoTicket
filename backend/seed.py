@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from database import SessionLocal, engine, Base
+from database import SessionLocal, engine, Base, init_db
 import models
 from auth import hash_password
 from import_excel_data import import_all_excel_data
 
 def seed_database():
-    Base.metadata.create_all(bind=engine)
+    init_db()
     db = SessionLocal()
 
     try:
@@ -16,104 +16,168 @@ def seed_database():
         except Exception as e:
             print(f"[Seed] Note on Excel import: {e}")
 
-        # Check if users already exist
-        if db.query(models.User).count() > 0:
-            print("[Seed] Users already seeded.")
-            return
-
-        print("[Seed] Seeding Techno Communications LLC mock data...")
-
-        # 1. Seed Users
-        users_data = [
+        # 1. Seed or Sync Users with 4 Panels
+        panels_users_data = [
+            {
+                "name": "Super Admin",
+                "email": "superadmin@techno-communications.com",
+                "phone": "(602) 555-0999",
+                "password": "SuperAdmin@2026",
+                "role": "SuperAdmin",
+                "panel_type": "SuperAdmin",
+                "department": "Admin",
+                "departments": ["All", "Admin", "Maintenance", "Ordering", "Accounting", "IT", "HR", "Compliance"],
+                "team_type": "Internal",
+            },
+            {
+                "name": "Haseeb Siddiqui",
+                "email": "manager@techno-communications.com",
+                "phone": "(602) 555-0888",
+                "password": "password123",
+                "role": "Manager",
+                "panel_type": "Manager",
+                "department": "Management",
+                "departments": ["Management"],
+                "team_type": "Internal",
+            },
             {
                 "name": "Amad Hussain",
                 "email": "amad@techno-communications.com",
                 "phone": "(602) 555-0111",
-                "role": "Admin",
+                "password": "password123",
+                "role": "Processor",
+                "panel_type": "Processor",
                 "department": "Admin",
+                "departments": ["Admin", "Maintenance"],
                 "team_type": "Internal",
             },
             {
                 "name": "Nur Rahman",
                 "email": "nur@techno-communications.com",
                 "phone": "(602) 555-0199",
-                "role": "MM",
+                "password": "password123",
+                "role": "Placer",
+                "panel_type": "Placer",
                 "department": "Management",
+                "departments": ["Management"],
                 "team_type": "Internal",
             },
             {
                 "name": "Jocel",
                 "email": "jocel@techno-communications.com",
                 "phone": "(602) 555-0182",
+                "password": "password123",
                 "role": "DM",
+                "panel_type": "Manager",
                 "department": "Management",
+                "departments": ["Management"],
                 "team_type": "Internal",
             },
             {
                 "name": "Salman Riaz",
                 "email": "salman@techno-communications.com",
                 "phone": "(713) 555-0144",
+                "password": "password123",
                 "role": "DM",
+                "panel_type": "Manager",
                 "department": "Management",
+                "departments": ["Management"],
                 "team_type": "Internal",
             },
             {
                 "name": "Syed Faizan",
                 "email": "faizan@techno-communications.com",
                 "phone": "(901) 555-0133",
+                "password": "password123",
                 "role": "Compliance",
+                "panel_type": "Processor",
                 "department": "Compliance",
+                "departments": ["Compliance"],
                 "team_type": "Internal",
             },
             {
                 "name": "Maqadam Mustfa",
                 "email": "maqadam@techno-communications.com",
                 "phone": "(602) 555-0122",
+                "password": "password123",
                 "role": "Solver",
+                "panel_type": "Processor",
                 "department": "Maintenance",
+                "departments": ["Maintenance"],
                 "team_type": "Internal",
             },
             {
                 "name": "Mukkaram Shareef",
                 "email": "mukkaram@techno-communications.com",
                 "phone": "(713) 555-0155",
+                "password": "password123",
                 "role": "Solver",
+                "panel_type": "Processor",
                 "department": "IT",
+                "departments": ["IT"],
                 "team_type": "Internal",
             },
             {
                 "name": "Saunders Contractor Services",
                 "email": "saunders@external-tech.com",
                 "phone": "(800) 555-0177",
+                "password": "password123",
                 "role": "Solver",
+                "panel_type": "Processor",
                 "department": "Maintenance",
+                "departments": ["Maintenance"],
                 "team_type": "External",
             },
             {
                 "name": "Fatima Accounting Lead",
                 "email": "accounting@techno-communications.com",
                 "phone": "(602) 555-0166",
+                "password": "password123",
                 "role": "Admin",
+                "panel_type": "Processor",
                 "department": "Accounting",
+                "departments": ["Accounting"],
                 "team_type": "Internal",
             },
         ]
 
         created_users = {}
-        for u in users_data:
-            user = models.User(
-                name=u["name"],
-                email=u["email"],
-                phone=u["phone"],
-                password_hash=hash_password("password123"),
-                role=u["role"],
-                department=u["department"],
-                team_type=u["team_type"],
-                created_at=datetime.utcnow() - timedelta(days=90),
-            )
-            db.add(user)
-            db.flush()
-            created_users[u["email"]] = user
+        for u in panels_users_data:
+            existing = db.query(models.User).filter(models.User.email == u["email"]).first()
+            if existing:
+                existing.name = u["name"]
+                existing.phone = u["phone"]
+                existing.role = u["role"]
+                existing.panel_type = u["panel_type"]
+                existing.department = u["department"]
+                existing.departments = u["departments"]
+                existing.team_type = u["team_type"]
+                existing.password_hash = hash_password(u["password"])
+                created_users[u["email"]] = existing
+            else:
+                user = models.User(
+                    name=u["name"],
+                    email=u["email"],
+                    phone=u["phone"],
+                    password_hash=hash_password(u["password"]),
+                    role=u["role"],
+                    panel_type=u["panel_type"],
+                    department=u["department"],
+                    departments=u["departments"],
+                    team_type=u["team_type"],
+                    created_at=datetime.utcnow() - timedelta(days=90),
+                )
+                db.add(user)
+                db.flush()
+                created_users[u["email"]] = user
+        db.commit()
+
+        # Check if tickets already exist
+        if db.query(models.Ticket).count() > 0:
+            print("[Seed] Users synced and tickets already present.")
+            return
+
+        print("[Seed] Seeding Techno Communications LLC mock tickets...")
 
         # 2. Seed Stores
         stores_data = [

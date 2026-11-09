@@ -8,6 +8,11 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
 
+    # Supabase credentials
+    SUPABASE_URL: str = ""
+    SUPABASE_PUBLISHABLE_KEY: str = ""
+    SUPABASE_SECRET_KEY: str = ""
+
     # Cloudflare R2 / S3
     R2_ACCOUNT_ID: str = ""
     R2_ACCESS_KEY_ID: str = ""

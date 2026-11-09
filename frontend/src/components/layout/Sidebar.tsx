@@ -15,8 +15,10 @@ import {
   Contact2,
   Home,
   Layers,
-  X
+  X,
+  ShieldCheck
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -25,6 +27,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, setMobileOpen }) => {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [marketOpen, setMarketOpen] = useState(true);
 
   const navItems = [
@@ -163,6 +166,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, setMobileOpen }) =
               </div>
             )}
           </div>
+
+          {/* Super Admin Access Control */}
+          {(user?.role === "SuperAdmin" || user?.panel_type === "SuperAdmin" || user?.role === "Admin") && (
+            <div className="pt-3">
+              <div className="px-3 pb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                Administration
+              </div>
+              <Link
+                href="/super-admin/users"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition-colors ${
+                  pathname.startsWith("/super-admin/users")
+                    ? "bg-purple-800 text-white shadow-sm font-semibold"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4 text-purple-600" />
+                <span className="font-semibold text-xs">User & Access Control</span>
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Franchise Badge Footer */}

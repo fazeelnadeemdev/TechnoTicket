@@ -14,8 +14,15 @@ from routers import auth, tickets, stores, houses, mm_dm, users, dashboard, uplo
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Ensure uploads directory exists and auto-seed database
-    ensure_upload_dir()
-    init_db()
+    try:
+        ensure_upload_dir()
+    except Exception as e:
+        print(f"[Startup] Upload dir notice: {e}")
+
+    try:
+        init_db()
+    except Exception as e:
+        print(f"[Startup] Database init notice: {e}")
 
     try:
         seed_database()
@@ -34,15 +41,25 @@ app = FastAPI(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for local dev & Vercel deployment
+    allow_origins=[
+        "https://techno-ticket-portal.vercel.app",
+        "https://techno-ticket.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Static file serving for uploads (local fallback mode)
-ensure_upload_dir()
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+try:
+    ensure_upload_dir()
+    if os.path.exists(settings.UPLOAD_DIR):
+        app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+except Exception as e:
+    print(f"[Startup] Static uploads mount notice: {e}")
 
 # Include Routers
 app.include_router(auth.router)

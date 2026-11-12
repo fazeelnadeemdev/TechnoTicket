@@ -7,6 +7,8 @@ from config import settings
 logger = logging.getLogger("technoticket.database")
 
 def get_sqlite_url() -> str:
+    if os.environ.get("VERCEL"):
+        return "sqlite:////tmp/techno_tickets.db"
     backend_dir = os.path.dirname(os.path.abspath(__file__))
     abs_db_path = os.path.join(backend_dir, "techno_tickets.db").replace("\\", "/")
     return f"sqlite:///{abs_db_path}"
